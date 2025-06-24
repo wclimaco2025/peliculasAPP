@@ -34,7 +34,7 @@ header h1 {
   color: #e50914;
 }
 
-#language-btn {
+.language-btn {
   background-color: #e50914; 
   color: white;
   border: 2px solid #e50914; 
@@ -46,7 +46,7 @@ header h1 {
   transition: all 0.3s ease; 
 }
 
-#language-btn:hover {
+.language-btn:hover {
   background-color: #ff0000;
   transform: translateY(-2px); 
   box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4); 

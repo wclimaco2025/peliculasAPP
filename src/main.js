@@ -17,12 +17,14 @@ const texts = {
   'Español': {
     welcome: 'Bienvenido a PeliculasAPP',
     changeLanguage: 'Cambiar a Inglés',
-    viewMovies: 'Ver Películas'
+    viewMovies: 'Ver Películas',
+    returnLanguage: 'Ver Categorías'
   },
   'Inglés': {
     welcome: 'Welcome to MoviesAPP',
     changeLanguage: 'Change to Spanish',
-    viewMovies: 'View Movies'
+    viewMovies: 'View Movies',
+    returnLanguage: 'Return to Categories'
   }
 };
 
@@ -64,19 +66,35 @@ const cambiarIdioma = () => {
 };
 
 
-// Actualiza el texto del header de acuerdo al lenguaje seleccionado
+// Actualiza el texto del header y contenido de acuerdo al lenguaje seleccionado
 const updateUI = () => {
   const header = document.querySelector('header');
   if (header) { // valida si existe la etiqueta header
     header.innerHTML = `
       <h1>${texts[currentLanguage].welcome}</h1>
-      <button id="language-btn" onclick="cambiarIdioma()">${texts[currentLanguage].changeLanguage}</button>
+      <button id="categorias-btn" class="language-btn" >${texts[currentLanguage].returnLanguage}</button>
+      <button id="language-btn" class="language-btn" >${texts[currentLanguage].changeLanguage}</button>
     `;
+    // Se movieron al metodo UpdateUI para que se vuelva a asociar el evento click
+    //  despues de renderizar el header
+    const btnCategorias = document.querySelector('#categorias-btn');
+    const languageBtn = document.querySelector('#language-btn');
+    if (btnCategorias) {
+      btnCategorias.addEventListener('click',getGeneros);
+    }
+    if (languageBtn) {
+      languageBtn.addEventListener('click',cambiarIdioma);
+    }
   }
+
+
   // Volver a realizar la petición con el lenguaje seleccionado
-  getGeneros();
-
-
+  const moviePages = document.querySelector('#generos-peliculas');
+  if (moviePages) {
+    getPeliculasPorGenero(localStorage.getItem('generoId'));
+  }else{
+     getGeneros();
+  }
 };
 
 // Opciones de la petición. La Api pide key de autenticación
@@ -124,6 +142,7 @@ const getGeneros =()=>
       buttons.forEach((btn)=>{
         btn.addEventListener('click',()=>{
           getPeliculasPorGenero(btn.id);
+          localStorage.setItem('generoId', btn.id);
         })
       })
     })
@@ -131,6 +150,7 @@ const getGeneros =()=>
     .catch((err)=>console.error(err));
   }
 
+// Obtener detalle de las películas
 const getDetallesPelicula= (id)=>{
     console.log(id);
   }
@@ -146,7 +166,7 @@ app.appendChild(footer);
 // Para cargar los generos de las peliculas
 updateUI();
 
-// Make cambiarIdioma function globally available
+// Hacer la funcion global
 window.cambiarIdioma = cambiarIdioma;
 
 const getPeliculasPorGenero =(id)=>
