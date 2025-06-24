@@ -156,7 +156,6 @@ const getPeliculasPorGenero =(id)=>
     
     // Limpiar contenido de main-content
     mainContent.innerHTML = '';
-    mainContent.innerHTML = '';
       const generosContainer = document.createElement('div');
       generosContainer.id = 'generos-peliculas';
       generosContainer.className="peliculas";
