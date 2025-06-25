@@ -1,9 +1,6 @@
 import './style.css'
 import { PeliculasEndpoint, apiKey, ImagenEndpoint } from './endpoints.js'
 
-
-
-
 // Initial state
 const userPrefersSpanish = navigator.language && navigator.language.startsWith('es');
 const savedLanguage = localStorage.getItem('language');
@@ -15,14 +12,18 @@ document.documentElement.setAttribute('data-language', initialLanguage);
 // Texto en ingles y español
 const texts = {
   'Español': {
-    welcome: 'Bienvenido a PeliculasAPP',
-    changeLanguage: 'Cambiar a Inglés',
+    logo: 'PeliculasAPP',
+    textWelcome1:'Descubre tu próxima película favorita',
+    textWelcome2:'Explora miles de películas organizadas por género y encuentra exactamente lo que buscas',
+    changeLanguage: '🌐 Cambiar a Inglés',
     viewMovies: 'Ver Películas',
     returnLanguage: 'Ver Categorías'
   },
   'Inglés': {
-    welcome: 'Welcome to MoviesAPP',
-    changeLanguage: 'Change to Spanish',
+    logo: 'MoviesAPP',
+    textWelcome1:'Descubre tu próxima película favorita',
+    textWelcome2:'Explora miles de películas organizadas por género y encuentra exactamente lo que buscas',
+    changeLanguage: '🌐 Change to Spanish',
     viewMovies: 'View Movies',
     returnLanguage: 'Return to Categories'
   }
@@ -51,6 +52,11 @@ const generateStars = (voteAverage) => {
 const app = document.querySelector('#app');
 const header = document.createElement('header');
 const mainContent = document.createElement('main');
+const heroSection = document.createElement('section');
+heroSection.className="hero-section";
+const searchSection = document.createElement('section');
+searchSection.className="search-section";
+const categoriesSection = document.createElement('section');
 const footer = document.createElement('footer');
 
 let currentLanguage = initialLanguage;
@@ -67,14 +73,46 @@ const cambiarIdioma = () => {
 
 
 // Actualiza el texto del header y contenido de acuerdo al lenguaje seleccionado
+/*   <h1>${texts[currentLanguage].welcome}</h1>
+      <button id="categorias-btn" class="language-btn" >${texts[currentLanguage].returnLanguage}</button>
+      <button id="language-btn" class="language-btn" >${texts[currentLanguage].changeLanguage}</button> */
 const updateUI = () => {
   const header = document.querySelector('header');
   if (header) { // valida si existe la etiqueta header
+    header.className="header";
     header.innerHTML = `
-      <h1>${texts[currentLanguage].welcome}</h1>
-      <button id="categorias-btn" class="language-btn" >${texts[currentLanguage].returnLanguage}</button>
-      <button id="language-btn" class="language-btn" >${texts[currentLanguage].changeLanguage}</button>
-    `;
+      <div class="nav-container">
+      <h1 class="logo">${texts[currentLanguage].logo}</h1>
+        <div class="nav-buttons">
+            <button class="nav-btn btn-primary" id="categorias-btn">${texts[currentLanguage].returnLanguage}</button>
+            <button class="nav-btn btn-secondary" id="language-btn">${texts[currentLanguage].changeLanguage}</button>
+        </div>
+      </div>
+      `;
+
+    // Hero section
+    //const heroSection = document.querySelector('.hero-section');
+    if (heroSection) {
+      heroSection.innerHTML = `
+      <div class="hero-content">
+        <h2>${texts[currentLanguage].textWelcome1}</h2>
+        <p>${texts[currentLanguage].textWelcome2}</p>
+        <button class="btn btn-primary" id="ver-peliculas-btn">${texts[currentLanguage].viewMovies}</button>
+      </div>
+      `;
+    } // end hero
+
+    // Search section
+    // const searchSection = document.querySelector('.search-section');
+    if (searchSection) {
+      searchSection.innerHTML = `
+      <div class="search-content">
+        <input type="text" id="search-input" placeholder="Buscar película por título">
+        <button class="btn btn-secondary" id="search-btn">Buscar</button>
+      </div>
+      `;
+    } // end search
+
     // Se movieron al metodo UpdateUI para que se vuelva a asociar el evento click
     //  despues de renderizar el header
     const btnCategorias = document.querySelector('#categorias-btn');
@@ -87,15 +125,15 @@ const updateUI = () => {
     }
   }
 
-
   // Volver a realizar la petición con el lenguaje seleccionado
-  const moviePages = document.querySelector('#generos-peliculas');
+  const moviePages = document.querySelector('#categoriesContainer');
+  console.log("update UI CategoriesContainer",moviePages)
   if (moviePages) {
     getPeliculasPorGenero(localStorage.getItem('generoId'));
   }else{
      getGeneros();
   }
-};
+}
 
 // Opciones de la petición. La Api pide key de autenticación
 const options ={
@@ -120,25 +158,35 @@ const getGeneros =()=>
     .then((data)=>{
       console.log(data);
       // Limpiar el contenido de mainContent
-      mainContent.innerHTML = '';
-      const generosContainer = document.createElement('div');
-      generosContainer.id = 'generos-container';
-      generosContainer.className="generos";
-      mainContent.appendChild(generosContainer);
+      categoriesSection.innerHTML = '';
+      //Crear un div contenedor de categorias
+      const categoriesContainer = document.createElement('div');
+      categoriesContainer.className="categories-grid";
+      categoriesContainer.id="categoriesGrid";
+      categoriesSection.appendChild(categoriesContainer);
+      // Agregar categorias al section de CategoriasContainer
+      data.genres.forEach((category, index) => {
+        const card = document.createElement('div');
+        card.className = 'category-card loading glow-effect';
+        card.style.animationDelay = (index * 0.1) + 's';
+        card.innerHTML = `
+            <span class="category-icon">${category.icon || ''}</span>
+            <h3 class="category-title">${category.name}</h3>
+            <button class="category-btn" id="${category.id}">
+                ${texts[currentLanguage].viewMovies}
+            </button>
+        `;
+        
+        // Efecto Hover  
+        card.addEventListener('mouseenter', function() {
+            this.style.setProperty('--category-color', category.color);
+        });
+        
+        categoriesContainer.appendChild(card);
+    });
 
-      data.genres.forEach((generos)=>{
-        //tarjeta de genero de pelicula 
-        // El id del boton se genera de acuerdo al id del genero
-        generosContainer.innerHTML +=`
-        <div class="card">
-          <h2>${generos.name}</h2>
-          <p><button id="${generos.id}" name="btn-${generos.id}" class="btn language-btn">${texts[currentLanguage].viewMovies}</button></p>
-        </div>
-        `
-      })
-      
       // Agregar evento click a los botones pasando el id de genero
-      const buttons = document.querySelectorAll('.btn');
+      const buttons = document.querySelectorAll('.category-btn');
       buttons.forEach((btn)=>{
         btn.addEventListener('click',()=>{
           getPeliculasPorGenero(btn.id);
@@ -156,10 +204,11 @@ const getDetallesPelicula= (id)=>{
   }
 
 //Inyectar HTML
-
-
 app.appendChild(header);
 app.appendChild(mainContent);
+mainContent.appendChild(heroSection);
+mainContent.appendChild(searchSection);
+mainContent.appendChild(categoriesSection);
 app.appendChild(footer);
 
 
@@ -175,11 +224,12 @@ const getPeliculasPorGenero =(id)=>
   const apiLanguage = currentLanguage === 'Español' ? 'es-ES' : 'en-US';
     
     // Limpiar contenido de main-content
-    mainContent.innerHTML = '';
-      const generosContainer = document.createElement('div');
-      generosContainer.id = 'generos-peliculas';
-      generosContainer.className="peliculas";
-      mainContent.appendChild(generosContainer);
+    categoriesSection.innerHTML = '';
+      //Crear un div contenedor de peliculas por categoría
+      const peliculasContainer = document.createElement('div');
+      peliculasContainer.className="categories-grid";
+      peliculasContainer.id="categoriesGrid";
+      categoriesSection.appendChild(peliculasContainer);
     // URL de la API -- endpoint
     fetch(PeliculasEndpoint.peliculasCategoria(id, apiLanguage), options)
     // Respuesta de la API se convierte a JSON
@@ -189,7 +239,7 @@ const getPeliculasPorGenero =(id)=>
       console.log(data);
       data.results.forEach((pelicula)=>{
         //tarjeta de peliculas
-        generosContainer.innerHTML +=`
+        peliculasContainer.innerHTML +=`
         <div class="card">
           <img src="${ImagenEndpoint.base}/${pelicula.poster_path}" alt="${pelicula.title}">
           <h2>${pelicula.title}</h2>
