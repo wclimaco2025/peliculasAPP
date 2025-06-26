@@ -9,6 +9,7 @@ const initialLanguage = savedLanguage || (userPrefersSpanish ? 'Español' : 'Ing
 // Apply initial language
 document.documentElement.setAttribute('data-language', initialLanguage);
 
+
 // Texto en ingles y español
 const texts = {
   'Español': {
@@ -17,19 +18,47 @@ const texts = {
     textWelcome2:'Explora miles de películas organizadas por género y encuentra exactamente lo que buscas',
     changeLanguage: '🌐 Cambiar a Inglés',
     viewMovies: 'Ver Películas',
-    returnLanguage: 'Ver Categorías'
+    returnLanguage: 'Ver Categorías',
+    searchMovies:'Buscar película por título',
+    loadingMovies:'Cargando películas...',
   },
   'Inglés': {
     logo: 'MoviesAPP',
-    textWelcome1:'Descubre tu próxima película favorita',
-    textWelcome2:'Explora miles de películas organizadas por género y encuentra exactamente lo que buscas',
+    textWelcome1:'Discover your next favorite movie',
+    textWelcome2:'Discover thousands of movies organized by genre and find exactly what you are looking for',
     changeLanguage: '🌐 Change to Spanish',
     viewMovies: 'View Movies',
-    returnLanguage: 'Return to Categories'
+    returnLanguage: 'Return to Categories',
+    searchMovies:'Search for a movie by title',
+    loadingMovies:'Loading movies...',
   }
 };
 
-const generateStars = (voteAverage) => {
+// creamos la estructura de la pagina 
+const app = document.querySelector('#app');
+const header = document.createElement('header');
+const mainContent = document.createElement('main');
+mainContent.className= "main-container";
+const heroSection = document.createElement('section');
+heroSection.className="hero-section";
+const searchSection = document.createElement('section');
+searchSection.className="search-section";
+const categoriesSection = document.createElement('section');
+const footer = document.createElement('footer');
+
+// Idioma por defecto
+let currentLanguage = initialLanguage;
+
+// Cambiar idioma 
+const cambiarIdioma = () => {
+ currentLanguage = currentLanguage === 'Español' ? 'Inglés' : 'Español';
+ localStorage.setItem('language', currentLanguage);
+ document.documentElement.setAttribute('data-language', currentLanguage);
+  updateUI();
+};
+
+// Metodo para calcular las estrellas --omitido en el nuevo diseño
+/* const generateStars = (voteAverage) => {
   const fullStars = Math.floor(voteAverage / 2);
   const halfStar = (voteAverage % 2) >= 1 ? 1 : 0;
   const emptyStars = 5 - fullStars - halfStar;
@@ -45,31 +74,10 @@ const generateStars = (voteAverage) => {
     starsHtml += '<i class="far fa-star"></i>';
   }
   return starsHtml;
-};
+}; */
 
-
-// creamos la estructura de la pagina 
-const app = document.querySelector('#app');
-const header = document.createElement('header');
-const mainContent = document.createElement('main');
-const heroSection = document.createElement('section');
-heroSection.className="hero-section";
-const searchSection = document.createElement('section');
-searchSection.className="search-section";
-const categoriesSection = document.createElement('section');
-const footer = document.createElement('footer');
-
-let currentLanguage = initialLanguage;
-
-
-
-// Cambiar idioma 
-const cambiarIdioma = () => {
- currentLanguage = currentLanguage === 'Español' ? 'Inglés' : 'Español';
- localStorage.setItem('language', currentLanguage);
- document.documentElement.setAttribute('data-language', currentLanguage);
-  updateUI();
-};
+// Hacer la funcion global
+window.cambiarIdioma = cambiarIdioma;
 
 
 // Actualiza el texto del header y contenido de acuerdo al lenguaje seleccionado
@@ -95,9 +103,8 @@ const updateUI = () => {
     if (heroSection) {
       heroSection.innerHTML = `
       <div class="hero-content">
-        <h2>${texts[currentLanguage].textWelcome1}</h2>
-        <p>${texts[currentLanguage].textWelcome2}</p>
-        <button class="btn btn-primary" id="ver-peliculas-btn">${texts[currentLanguage].viewMovies}</button>
+        <h2 class="hero-title">${texts[currentLanguage].textWelcome1}</h2>
+        <p class="hero-subtitle">${texts[currentLanguage].textWelcome2}</p>
       </div>
       `;
     } // end hero
@@ -106,9 +113,13 @@ const updateUI = () => {
     // const searchSection = document.querySelector('.search-section');
     if (searchSection) {
       searchSection.innerHTML = `
-      <div class="search-content">
-        <input type="text" id="search-input" placeholder="Buscar película por título">
-        <button class="btn btn-secondary" id="search-btn">Buscar</button>
+      <div class="search-container">
+        <input type="text"  class="search-input" id="search-input" placeholder="${texts[currentLanguage].searchMovies}">
+        <button class="search-btn" id="search-btn"> 
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+           </svg>
+        </button>
       </div>
       `;
     } // end search
@@ -126,7 +137,7 @@ const updateUI = () => {
   }
 
   // Volver a realizar la petición con el lenguaje seleccionado
-  const moviePages = document.querySelector('#categoriesContainer');
+  const moviePages = document.querySelector('.movie-card');
   console.log("update UI CategoriesContainer",moviePages)
   if (moviePages) {
     getPeliculasPorGenero(localStorage.getItem('generoId'));
@@ -203,25 +214,16 @@ const getDetallesPelicula= (id)=>{
     console.log(id);
   }
 
-//Inyectar HTML
-app.appendChild(header);
-app.appendChild(mainContent);
-mainContent.appendChild(heroSection);
-mainContent.appendChild(searchSection);
-mainContent.appendChild(categoriesSection);
-app.appendChild(footer);
-
-
-// Para cargar los generos de las peliculas
-updateUI();
-
-// Hacer la funcion global
-window.cambiarIdioma = cambiarIdioma;
-
+// Obtener las peliculas al seleccionar el género
 const getPeliculasPorGenero =(id)=>
   {
+     const grid = document.getElementById('categoriesGrid');
+            
+            // Add loading animation
+    grid.innerHTML = `<div class="loading-spinner">${texts[currentLanguage].loadingMovies}</div>`;
+
     // Get language code for API
-  const apiLanguage = currentLanguage === 'Español' ? 'es-ES' : 'en-US';
+    const apiLanguage = currentLanguage === 'Español' ? 'es-ES' : 'en-US';
     
     // Limpiar contenido de main-content
     categoriesSection.innerHTML = '';
@@ -237,36 +239,78 @@ const getPeliculasPorGenero =(id)=>
     // Imprimir el json en consola
     .then((data)=>{
       console.log(data);
-      data.results.forEach((pelicula)=>{
+      data.results.forEach((pelicula,index)=>{
         //tarjeta de peliculas
-        peliculasContainer.innerHTML +=`
-        <div class="card">
-          <img src="${ImagenEndpoint.base}/${pelicula.poster_path}" alt="${pelicula.title}">
-          <h2>${pelicula.title}</h2>
-          <p>${pelicula.overview}</p>
-          <div class="movie-info">
-            <div class="rating">
-              ${generateStars(pelicula.vote_average)}
-              <span>${pelicula.vote_average.toFixed(1)}</span>
-            </div>
-            <div class="votes">
-              <i class="fas fa-heart"></i>
-              <span>${pelicula.vote_count}</span>
-            </div>
-          </div>
-        </div>
-        `
+      const movieCard = document.createElement('div');
+                    movieCard.className = 'movie-card';
+                    movieCard.style.animationDelay = (index * 0.1) + 's';
+                    
+                    movieCard.innerHTML = `
+                        <div class="movie-poster">
+                            <img src="${ImagenEndpoint.base}/${pelicula.poster_path}" alt="${pelicula.title}" loading="lazy">
+                            <div class="movie-overlay">
+                                <button class="play-btn" onclick="playMovie('${pelicula.title}')">
+                                    <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M8 5v14l11-7z"/>
+                                    </svg>
+                                </button>
+                                <button class="info-btn" onclick="showMovieInfo('${pelicula.title}')">
+                                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="movie-rating">
+                                <span class="rating-stars">★</span>
+                                <span class="rating-number">${(pelicula.vote_average).toFixed(2)}</span>
+                            </div>
+                        </div>
+                        <div class="movie-info">
+                            <h3 class="movie-title">${pelicula.title}</h3>
+                            <div class="movie-meta">
+                                <span class="movie-year">${pelicula.year || 'Desconocido'}</span>
+                                <span class="pelicula-duration">${pelicula.duration || 'Desconocido'}</span>
+                            </div>
+                            <p class="movie-description">${pelicula.overview}</p>
+                            <div class="movie-actions">
+                                <button class="like-btn" onclick="toggleLike(this, '${pelicula.title}')">
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                    </svg>
+                                    <span class="like-count">${pelicula.vote_count}</span>
+                                </button>
+                                <button class="watch-btn" onclick="playMovie('${pelicula.title}')">
+                                    Ver Ahora
+                                </button>
+                            </div>
+                        </div>
+                    `
+                    peliculasContainer.appendChild(movieCard);
+
+                   
       })
-      // Agrega el evento click a los botones
-      const movieCards = document.querySelectorAll('.card');
-      movieCards.forEach((card) => {
-        card.addEventListener('click', () => {
-          getDetallesPelicula(pelicula.id);
-        });
-      });
+        // Efecto de Animación de peliculas
+          const movieCards = grid.querySelectorAll('.movie-card');
+          movieCards.forEach(card => {
+              card.classList.add('loading');
+              getDetallesPelicula(pelicula.id);
+          });
     })
     // si hay errores imprimirlos en consola
     .catch((err)=>console.error(err));
 
 
   }
+
+//Inyectar HTML
+app.appendChild(header);
+app.appendChild(mainContent);
+mainContent.appendChild(heroSection);
+mainContent.appendChild(searchSection);
+mainContent.appendChild(categoriesSection);
+app.appendChild(footer);
+
+
+// Para cargar los generos de las peliculas al iniciar la aplicacion
+updateUI();
+
